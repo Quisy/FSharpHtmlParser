@@ -5,8 +5,9 @@ module Parser
 #endif
 open FSharp.Data
 open System.Text
+open System.Collections.Generic
 
-type Parser(url, console, writeToFile, filePath) = 
+type Parser(url, console, writeToFile, filePath, depthLevel) = 
     let parseUrl = string url
     let writeToConsole = console;
     let encoding = Encoding.GetEncoding("Windows-1250")
@@ -15,7 +16,9 @@ type Parser(url, console, writeToFile, filePath) =
     let file = System.IO.File.CreateText(filePath) 
 
 
-    let visitedUrls = []
+    let visitedUrls = new List<string>()
+
+    let urlsToVisit = new List<string>()
     
     let links = 
         results.Descendants ["a"]
@@ -46,7 +49,23 @@ type Parser(url, console, writeToFile, filePath) =
             // printf "%A\n" text
             let textWords = text.Split [|' '|]
             textWords |> Seq.iter (fun x -> words.Add x)
-            readNode(element)
+            readNode(element)      
+
+    member _this.SetUrlsToVisit =
+        let tempUrls = new List<string>()
+        let urlToParse = parseUrl;
+        for i = 0 to depthLevel do
+            let urlResults = HtmlDocument.Load(urlToParse, encoding)
+            let tempLinks = 
+                urlResults.Descendants ["a"] 
+                    |> Seq.choose (fun x -> x.TryGetAttribute("href") 
+                        |> Option.map (fun a -> a.Value())
+                    )
+            tempLinks = Seq.distinct(tempLinks)
+            for link in tempLinks do
+                if !tempUrls.Contains(link) then tempUrls.Add(link)
+
+        )
 
     member _this.GetImages =
         printf "\nIMAGES:\n"

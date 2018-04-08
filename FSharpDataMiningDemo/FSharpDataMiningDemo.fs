@@ -18,8 +18,11 @@ let main argv =
     let getImages = List.exists ((=) "-img") arglist
     let getScripts = List.exists ((=) "-script") arglist
     let countWords = List.exists ((=) "-text") arglist
+    let goDepth = List.exists ((=) "-depth") arglist
+    let goDepthIndex = if (goDepth) then List.findIndex (fun elem -> elem = "-depth") arglist else -1
+    let depthLevel = if(goDepthIndex >= 0) then arglist.[goDepthIndex+1] else ""
 
-    let parser = new Parser(urlName, writeToConsole, writeToFile, filePath);
+    let parser = new Parser(urlName, writeToConsole, writeToFile, filePath, depthLevel);
     if getImages then parser.GetImages
     if getLinks then parser.GetLinks
     if getScripts then parser.GetScripts
