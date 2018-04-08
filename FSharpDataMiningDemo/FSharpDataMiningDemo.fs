@@ -5,8 +5,25 @@ open System
 
 [<EntryPoint>]
 let main argv =
-    printfn "%A" argv
-    let parser = new Parser("http://www.aleksandragranos.pl/");
-    printfn "%A" parser.SearchResults
+    let arglist = argv |> List.ofSeq
+    printfn "%A" arglist
+    let url = List.exists ((=) "-url") arglist
+    let urlIndex = if (url) then List.findIndex (fun elem -> elem = "-url") arglist else -1
+    let urlName = if(urlIndex >= 0) then arglist.[urlIndex+1] else ""
+    let writeToFile = List.exists ((=) "-file") arglist
+    let fileIndex = if (writeToFile) then List.findIndex (fun elem -> elem = "-file") arglist else -1
+    let filePath = if(fileIndex >= 0) then arglist.[fileIndex+1] else ""
+    let writeToConsole = List.exists ((=) "-console") arglist
+    let getLinks = List.exists ((=) "-a") arglist
+    let getImages = List.exists ((=) "-img") arglist
+    let getScripts = List.exists ((=) "-script") arglist
+    let countWords = List.exists ((=) "-text") arglist
+
+    let parser = new Parser(urlName, writeToConsole, writeToFile, filePath);
+    if getImages then parser.GetImages
+    if getLinks then parser.GetLinks
+    if getScripts then parser.GetScripts
+    if countWords then parser.CountWords
+    parser.Dispose
     Console.ReadKey() |> ignore
     0 // return an integer exit code
