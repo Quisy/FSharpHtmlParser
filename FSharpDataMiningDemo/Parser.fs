@@ -51,21 +51,51 @@ type Parser(url, console, writeToFile, filePath, depthLevel) =
             textWords |> Seq.iter (fun x -> words.Add x)
             readNode(element)      
 
-    member _this.SetUrlsToVisit =
-        let tempUrls = new List<string>()
-        let urlToParse = parseUrl;
-        for i = 0 to depthLevel do
-            let urlResults = HtmlDocument.Load(urlToParse, encoding)
-            let tempLinks = 
-                urlResults.Descendants ["a"] 
-                    |> Seq.choose (fun x -> x.TryGetAttribute("href") 
-                        |> Option.map (fun a -> a.Value())
-                    )
-            tempLinks = Seq.distinct(tempLinks)
-            for link in tempLinks do
-                if !tempUrls.Contains(link) then tempUrls.Add(link)
+    let getUrlsFromUrl(url) =
+        let mutable urll = ""
+        if not (url.ToString().Contains(parseUrl)) then 
+            if (url.ToString().Contains("http")) then urll <- ""
+            elif (url.ToString().Contains("mailto:")) then urll <- ""
+            else urll <- System.String.Concat([|parseUrl; "/"; url|])        
+        elif (url.ToString().Contains(parseUrl)) then
+            urll <- url
+        elif (url.ToString().Contains("http")) then
+            urll <- ""
 
-        )
+        if (urll <> "") then
+            let docResult = HtmlDocument.Load(string urll, encoding) 
+            let urls = docResult.Descendants ["a"] |> Seq.choose (fun (x:HtmlNode) -> x.TryGetAttribute("href")) |> Seq.map (fun (a:HtmlAttribute) -> a.Value())
+            Seq.distinct(urls)
+        else
+            Seq.empty<string>    
+        
+
+    member _this.SetUrlsToVisit =
+        let tempUrlsToVisit = new List<string>()
+        let tempUrls = new List<string>()
+        let urlsToParse = new List<string>()
+        urlsToParse.Add(parseUrl)
+        for i = 1 to depthLevel do
+            for link in urlsToParse do
+                let tempLinks = getUrlsFromUrl(link)
+                tempUrls.AddRange(tempLinks)
+            tempUrlsToVisit.AddRange(tempUrls)
+            urlsToParse.Clear()
+            urlsToParse.AddRange(tempUrls)
+            tempUrls.Clear()
+        urlsToParse.Clear()
+        let distinctUrls = Seq.distinct(tempUrlsToVisit)
+        //urlsToVisit.AddRange(distinctUrls)
+        for url in distinctUrls do
+            let mutable urll = ""
+            if not (url.ToString().Contains(parseUrl)) then 
+                urll <- System.String.Concat([|parseUrl; "/"; url|])
+            else 
+                urll <- url
+            urlsToVisit.Add(urll)
+
+
+
 
     member _this.GetImages =
         printf "\nIMAGES:\n"
@@ -89,6 +119,10 @@ type Parser(url, console, writeToFile, filePath, depthLevel) =
             file.WriteLine("")
             file.WriteLine("SCRIPTS:")
             scripts |> Seq.iter (fun x -> file.WriteLine(x))
+
+    member _this.PrintUrlsToVisit =
+        printf "\n\nURLS TO VISIT: \n"
+        urlsToVisit |> Seq.iter (fun x -> printf "%A\n" x)
 
     member _this.CountWords =
         let body = results.Descendants ["body"]
