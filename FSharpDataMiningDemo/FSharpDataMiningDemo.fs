@@ -30,6 +30,8 @@ let main argv =
     if getScripts then parser.GetScripts
     if countWords then parser.CountWords
 
+    parser.CountCosinus
+
     
 
     parser.Dispose

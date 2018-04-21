@@ -6,6 +6,7 @@ module Parser
 open FSharp.Data
 open System.Text
 open System.Collections.Generic
+open System.Numerics
 
 type Parser(url, console, writeToFile, filePath, depthLevel) = 
     let parseUrl = string url
@@ -72,27 +73,48 @@ type Parser(url, console, writeToFile, filePath, depthLevel) =
             Seq.distinct(urls)
         else
             Seq.empty<string>    
-        
+
+
+    let getWordsFromsUrl(url) =
+        let results = HtmlDocument.Load(string url, encoding)
+        let body = results.Descendants ["body"]
+        if Seq.length(body) > 0 then 
+            words.Clear()
+            let node = body |> Seq.head
+            readNode(node)
+        words
+
+    let getUrlsPairs(urls:List<string>) =
+        let pairList = new List<string * string>()
+        for i = 0 to urls.Count-1 do
+            let url = urls.[i]
+            for k = i+1 to urls.Count-1 do
+                let pair = (url,urls.[k])
+                pairList.Add(pair)
+        pairList    
 
     member _this.SetUrlsToVisit =
         let tempUrlsToVisit = new List<string>()
         let tempUrls = new List<string>()
         let urlsToParse = new List<string>()
-        urlsToParse.Add(parseUrl)
-        for i = 1 to depthLevel do
-            for link in urlsToParse do
-                let tempLinks = getUrlsFromUrl(link)
-                tempUrls.AddRange(tempLinks)
-            tempUrlsToVisit.AddRange(tempUrls)
+        if depthLevel <= 1 then
+            urlsToVisit.Add(parseUrl)
+        else    
+            urlsToParse.Add(parseUrl)
+            for i = 1 to depthLevel do
+                for link in urlsToParse do
+                    let tempLinks = getUrlsFromUrl(link)
+                    tempUrls.AddRange(tempLinks)
+                tempUrlsToVisit.AddRange(tempUrls)
+                urlsToParse.Clear()
+                urlsToParse.AddRange(tempUrls)
+                tempUrls.Clear()
             urlsToParse.Clear()
-            urlsToParse.AddRange(tempUrls)
-            tempUrls.Clear()
-        urlsToParse.Clear()
-        let distinctUrls = Seq.distinct(tempUrlsToVisit)
-        //urlsToVisit.AddRange(distinctUrls)
-        for url in distinctUrls do
-            let urll = filterUrl(url)
-            if (urll <> "") then urlsToVisit.Add(urll)
+            let distinctUrls = Seq.distinct(tempUrlsToVisit)
+            //urlsToVisit.AddRange(distinctUrls)
+            for url in distinctUrls do
+                let urll = filterUrl(url)
+                if (urll <> "") then urlsToVisit.Add(urll)
     member _this.GetImages =
         if writeToConsole then printf "\nIMAGES:\n"
         if writeToFile then file.WriteLine("IMAGES:")
@@ -134,33 +156,52 @@ type Parser(url, console, writeToFile, filePath, depthLevel) =
         if writeToConsole then printf "\nWORDS:\n"
         if writeToFile then file.WriteLine("nWORDS:")
         for url in urlsToVisit do
+            words.Clear()
             let results = HtmlDocument.Load(string url, encoding)
             let body = results.Descendants ["body"]
-            let node = body |> Seq.head
-            readNode(node)
+            if Seq.length(body) > 0 then 
+                let node = body |> Seq.head
+                readNode(node)
 
-            if writeToConsole then 
-                printf "\n%A:\n" url
-                words
-                |> Seq.countBy (fun s -> s.Trim())
-                |> Seq.sortBy (snd >> (~-))
-                |> Seq.iter (fun x -> printf "%A\n" x)
+                if writeToConsole then 
+                    printf "\n%A:\n" url
+                    words
+                    |> Seq.countBy (fun s -> s.Trim())
+                    |> Seq.iter (fun (x) -> printf "%A\n" x)
 
-            if writeToFile then
-                file.WriteLine(url)
-                words
-                |> Seq.countBy (fun s -> s.Trim())
-                |> Seq.sortBy (snd >> (~-))
-                |> Seq.iter (fun x -> file.WriteLine(x))
+                if writeToFile then
+                    file.WriteLine(url)
+                    words
+                    |> Seq.countBy (fun s -> s.Trim())
+                    |> Seq.sortBy (snd >> (~-))
+                    |> Seq.iter (fun x -> file.WriteLine(x))
 
 
-    member _this.GoDepth(depth) =
-        printf "%A\n" depth
+    member _this.CountCosinus =
+        let pairList = getUrlsPairs(urlsToVisit)
+        for (x,y) in pairList do
+            let allWords = new List<string>()
+            let tmpWords1 = new List<string>()
+            let tmpWords2 = new List<string>()
+            tmpWords1.AddRange(getWordsFromsUrl(x))
+            tmpWords2.AddRange(getWordsFromsUrl(y))
+            let words1 = tmpWords1 |> Seq.countBy (fun s -> s.Trim())
+            let words2 = tmpWords2 |> Seq.countBy (fun s -> s.Trim())
+
+            words1 |> Seq.iter(fun (x,y) -> allWords.Add(x)) 
+            words2 |> Seq.iter(fun (x,y) -> allWords.Add(x))
+            let uniqueWords = Seq.distinct(allWords)
+            let vector1 = seq { for word in uniqueWords -> words1 |> Seq.tryFindIndex( fun (x,y) -> x.Equals(word)) |> fun(x) -> if x=Option.None then -1 else Option.get(x) |> (fun(x) -> if x=(-1) then ("",0) else (Seq.item x words1)) |> fun(x,y) -> y }
+            let vector2 = seq { for word in uniqueWords -> words2 |> Seq.tryFindIndex( fun (x,y) -> x.Equals(word)) |> fun(x) -> if x=Option.None then -1 else Option.get(x) |> (fun(x) -> if x=(-1) then ("",0) else (Seq.item x words2)) |> fun(x,y) -> y }
+            // printf "%A\n" x
+            // printf "%A\n" y
+            // vector1 |> Seq.iter (fun (x) -> printf "%A, " x)
+            // printf "\n"
+            // vector2 |> Seq.iter (fun (x) -> printf "%A, " x)
+                
+
 
     member _this.Dispose =
         file.Close()  
   
-
-
-
 
