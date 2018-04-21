@@ -23,13 +23,14 @@ let main argv =
     let depthLevel = if(goDepthIndex >= 0) then arglist.[goDepthIndex+1] else ""
 
     let parser = new Parser(urlName, writeToConsole, writeToFile, filePath, depthLevel |> int);
+    parser.SetUrlsToVisit
+    //parser.PrintUrlsToVisit
     if getImages then parser.GetImages
     if getLinks then parser.GetLinks
     if getScripts then parser.GetScripts
     if countWords then parser.CountWords
 
-    parser.SetUrlsToVisit
-    parser.PrintUrlsToVisit
+    
 
     parser.Dispose
     Console.ReadKey() |> ignore
