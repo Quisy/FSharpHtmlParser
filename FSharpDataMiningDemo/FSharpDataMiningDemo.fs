@@ -31,7 +31,7 @@ let main argv =
     if countWords then parser.CountWords
 
     parser.CountCosinus
-
+    //FSharpDataMiningDemo.exe -url "URL" -file 1.txt -console -depth 2
     
 
     parser.Dispose

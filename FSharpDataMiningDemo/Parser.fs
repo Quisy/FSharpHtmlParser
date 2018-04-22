@@ -178,8 +178,10 @@ type Parser(url, console, writeToFile, filePath, depthLevel) =
 
 
     member _this.CountCosinus =
+        printf "COSINUS START\n"
         let pairList = getUrlsPairs(urlsToVisit)
-        for (x,y) in pairList do
+        let cosinus = new List<string * string * float>()
+        for (x,y) in Seq.take 1 pairList do
             let allWords = new List<string>()
             let tmpWords1 = new List<string>()
             let tmpWords2 = new List<string>()
@@ -193,11 +195,23 @@ type Parser(url, console, writeToFile, filePath, depthLevel) =
             let uniqueWords = Seq.distinct(allWords)
             let vector1 = seq { for word in uniqueWords -> words1 |> Seq.tryFindIndex( fun (x,y) -> x.Equals(word)) |> fun(x) -> if x=Option.None then -1 else Option.get(x) |> (fun(x) -> if x=(-1) then ("",0) else (Seq.item x words1)) |> fun(x,y) -> y }
             let vector2 = seq { for word in uniqueWords -> words2 |> Seq.tryFindIndex( fun (x,y) -> x.Equals(word)) |> fun(x) -> if x=Option.None then -1 else Option.get(x) |> (fun(x) -> if x=(-1) then ("",0) else (Seq.item x words2)) |> fun(x,y) -> y }
-            // printf "%A\n" x
-            // printf "%A\n" y
-            // vector1 |> Seq.iter (fun (x) -> printf "%A, " x)
-            // printf "\n"
-            // vector2 |> Seq.iter (fun (x) -> printf "%A, " x)
+            let mutable nominator = 0
+            let mutable denominator1 = 0
+            let mutable denominator2 = 0
+            //printf "go %A\n" ((Seq.length vector1)-1)
+            for i=0 to ((Seq.length vector1))-1 do
+                //printf "go %A\n" i
+                let vector1Val = Seq.item i vector1
+                let vector2Val = Seq.item i vector2
+                nominator <- nominator +  (vector1Val * vector2Val)
+                denominator1 <- denominator1 + (vector1Val * vector1Val)
+                denominator2 <- denominator2 + (vector2Val * vector2Val)
+            
+            let denominator = sqrt (float denominator1) * sqrt (float denominator2)
+            let cosinusValue = (float nominator)/denominator
+            cosinus.Add((x,y,cosinusValue))
+        cosinus |> Seq.iter (fun (x) -> printf "%A, " x)
+        printf "COSINUS END\n"
                 
 
 
