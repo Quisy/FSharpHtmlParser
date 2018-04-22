@@ -30,7 +30,9 @@ let main argv =
     if getScripts then parser.GetScripts
     if countWords then parser.CountWords
 
-    parser.CountCosinus
+    //parser.CountCosinus
+    parser.CountPageRank
+
     //FSharpDataMiningDemo.exe -url "URL" -file 1.txt -console -depth 2
     
 

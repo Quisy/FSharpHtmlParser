@@ -212,7 +212,34 @@ type Parser(url, console, writeToFile, filePath, depthLevel) =
             cosinus.Add((x,y,cosinusValue))
         cosinus |> Seq.iter (fun (x) -> printf "%A, " x)
         printf "COSINUS END\n"
-                
+
+    member _this.CountPageRank = 
+        printf "RANKING START\n"
+        let d = 0.85
+        let n = float urlsToVisit.Count
+        let startRank = 1.0;//1.0/n
+        let pageRanks = new List<string * float>()
+        let linksNo = seq { for url in urlsToVisit -> getLinksFromUrl(url) |>  Seq.length }
+        let tempRanks = seq { for url in urlsToVisit -> urlsToVisit |> Seq.findIndex (fun x -> x.Equals(url)) |> fun(x) -> if Seq.item x linksNo <> 0 then (url,startRank/float (Seq.item x linksNo)) else (url,0.0)}
+        let sumTempRanks = Seq.sumBy (fun (_,y) -> y) tempRanks 
+        //printf "%A \n" tempRanks
+        //tempRanks |> Seq.iter (fun (x) -> printf "%A, " x)
+        //printf "\n"
+        for url in urlsToVisit do
+            printf "go %A \n" url
+            //let tempRank = tempRanks |> Seq.where (fun (x,_) -> x <> url) |> Seq.sumBy( fun (_,y) -> y )
+            let currentUrlTempRank = urlsToVisit |> Seq.findIndex (fun x -> x.Equals(url)) |> fun x -> Seq.item x tempRanks |> fun (_,y) -> y
+            let tempRank = sumTempRanks - currentUrlTempRank
+            //printf "1\n"
+            //printf "%A \n" tempRank
+            let rank = ((1.0-d)/n) + d*tempRank
+            //printf "2\n"
+            pageRanks.Add((url, rank))
+
+
+        pageRanks |> Seq.iter (fun (x) -> printf "%A, " x)
+        printf "RANKING END\n"    
+
 
 
     member _this.Dispose =
