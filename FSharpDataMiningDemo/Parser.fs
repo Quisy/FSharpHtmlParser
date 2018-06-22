@@ -6,7 +6,6 @@ module Parser
 open FSharp.Data
 open System.Text
 open System.Collections.Generic
-open System.Numerics
 
 type Parser(url, console, writeToFile, filePath, depthLevel) = 
     let parseUrl = string url
@@ -181,7 +180,7 @@ type Parser(url, console, writeToFile, filePath, depthLevel) =
         printf "COSINUS START\n"
         let pairList = getUrlsPairs(urlsToVisit)
         let cosinus = new List<string * string * float>()
-        for (x,y) in Seq.take 1 pairList do
+        for (x,y) in Seq.take 2 pairList do
             let allWords = new List<string>()
             let tmpWords1 = new List<string>()
             let tmpWords2 = new List<string>()
@@ -217,7 +216,7 @@ type Parser(url, console, writeToFile, filePath, depthLevel) =
         printf "RANKING START\n"
         let d = 0.85
         let n = float urlsToVisit.Count
-        let startRank = 1.0;//1.0/n
+        let startRank = 1.0;
         let pageRanks = new List<string * float>()
         let linksNo = seq { for url in urlsToVisit -> getLinksFromUrl(url) |>  Seq.length }
         let tempRanks = seq { for url in urlsToVisit -> urlsToVisit |> Seq.findIndex (fun x -> x.Equals(url)) |> fun(x) -> if Seq.item x linksNo <> 0 then (url,startRank/float (Seq.item x linksNo)) else (url,0.0)}

@@ -19,6 +19,8 @@ let main argv =
     let getScripts = List.exists ((=) "-script") arglist
     let countWords = List.exists ((=) "-text") arglist
     let goDepth = List.exists ((=) "-depth") arglist
+    let countCos = List.exists ((=) "-cos") arglist
+    let countRank = List.exists ((=) "-rank") arglist
     let goDepthIndex = if (goDepth) then List.findIndex (fun elem -> elem = "-depth") arglist else -1
     let depthLevel = if(goDepthIndex >= 0) then arglist.[goDepthIndex+1] else ""
 
@@ -30,8 +32,8 @@ let main argv =
     if getScripts then parser.GetScripts
     if countWords then parser.CountWords
 
-    //parser.CountCosinus
-    parser.CountPageRank
+    if countCos then parser.CountCosinus
+    if countRank then parser.CountPageRank
 
     //FSharpDataMiningDemo.exe -url "URL" -file 1.txt -console -depth 2
     
